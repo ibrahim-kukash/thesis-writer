@@ -3,10 +3,10 @@ name: "thesis-writer"
 description: "Write publication-quality MSc/PhD thesis chapters that pass examiner scrutiny and AI detection tools. Use when writing thesis chapters, sections, or paragraphs. Also scans existing text for AI patterns and fixes them. Triggers: 'write my thesis', 'write chapter', 'literature review', 'write methodology', 'write results', 'write discussion', 'thesis writing', 'academic writing', 'fix AI writing in thesis', 'scan thesis for AI', 'prepare for viva'. NOT for general content writing (use content-production). NOT for humanizing non-academic text (use humanizer). NOT for presentations (use pptx)."
 license: MIT
 metadata:
-  version: 5.0.0
+  version: 6.1.0
   author: Ibrahim Kukash
   category: academic
-  updated: 2026-04-11
+  updated: 2026-05-02
 ---
 
 # Thesis Writer
@@ -57,6 +57,7 @@ Follow these constraints:
 - **Never fabricate citations.** Flag uncertain ones: `[CITATION NEEDED]`
 - **Never overclaim.** "Suggests," "indicates," "may" — never "proves" or "confirms"
 - **Never describe, always compare.** Every lit review paragraph must compare, contrast, or critique
+- **Two-paper rule.** Default to integrating ≥2 sources per paragraph. If a paragraph discusses one source in depth, the next paragraph must explicitly contrast it with another. No two consecutive paragraphs may both be single-source.
 - **Never explain textbook concepts.** The examiner knows what random forests are. Explain why YOU chose them
 - **Be specific.** "RMSE decreased from 0.15 to 0.11" not "performance improved"
 - **One term per concept, everywhere.** Pick one and stick to it across all chapters
@@ -85,6 +86,14 @@ Your job:
   one-line reason
 - Flag additional issues the scanner missed: weak arguments, unsupported claims,
   examiner vulnerabilities, tone inconsistencies between sections
+- **Lit Review Check:** Read every paragraph. If a paragraph summarizes a single
+  paper without explicitly comparing its methods, limitations, or findings to
+  another paper, FLAG as 'Descriptive Summary'. Exception: a paragraph going
+  deep on one source is allowed only if the next paragraph contrasts it.
+- **Wrap-up Check:** Inspect the final sentence of every section. If it reads
+  like a generic importance statement (e.g. "These findings highlight…",
+  "This underscores the need for…", "These limitations show…"), FLAG as
+  'Formulaic Ending'.
 - Rate overall AI detection risk: HIGH / MEDIUM / LOW
 - If chapter is specified, check chapter-appropriate citation density, hedging
   level, and comparison frequency

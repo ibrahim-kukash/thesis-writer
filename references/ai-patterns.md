@@ -250,6 +250,8 @@ The patterns above tell you what to remove. These tell you what to add. Based on
 
 **Rule:** Include at least one moment of genuine uncertainty or limitation per major section. Not a formulaic "more research is needed" — a specific, honest acknowledgment of something you don't know.
 
+**Sub-rule (Lit Review and Discussion):** Where the literature genuinely conflicts, name the contradiction explicitly. Use phrasing such as "It remains unclear whether…" or "The literature is at odds regarding…" and do not attempt to resolve it. Do NOT manufacture a contradiction where none exists — a fake disagreement is worse than no disagreement.
+
 ---
 
 ## 19. Vary Paragraph Length Deliberately
