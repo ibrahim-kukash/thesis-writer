@@ -3,10 +3,10 @@ name: "thesis-writer"
 description: "Write publication-quality MSc/PhD thesis chapters that pass examiner scrutiny and AI detection tools. Use when writing thesis chapters, sections, or paragraphs. Also scans existing text for AI patterns and fixes them. Triggers: 'write my thesis', 'write chapter', 'literature review', 'write methodology', 'write results', 'write discussion', 'thesis writing', 'academic writing', 'fix AI writing in thesis', 'scan thesis for AI', 'prepare for viva'. NOT for general content writing (use content-production). NOT for humanizing non-academic text (use humanizer). NOT for presentations (use pptx)."
 license: MIT
 metadata:
-  version: 6.1.0
+  version: 6.2.0
   author: Ibrahim Kukash
   category: academic
-  updated: 2026-05-02
+  updated: 2026-05-27
 ---
 
 # Thesis Writer

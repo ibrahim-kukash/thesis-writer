@@ -100,6 +100,16 @@ Based on how detectors work:
 
 Non-native English speakers face 61% false positive rates in AI detectors. This skill is especially useful for international students.
 
+## Research basis
+
+The patterns are grounded in published work — and deliberately updated as the models change:
+
+- **Lexical tells** (the banned-word list) come from Kobak et al., *Delving into LLM-assisted writing in biomedical publications through excess vocabulary*, **Science Advances 2025** ([arXiv:2406.07016](https://arxiv.org/abs/2406.07016)) — a 14M-abstract study of which words surged after ChatGPT (*delves* ×25, *showcasing* ×9, *underscores* ×9).
+- **These tells decay.** "delve" peaked in 2023–24 and faded through 2025 as labs trained it out, so current-gen models lean on formulaic transitions instead — "In conclusion," "It is important to note," "Notably" — flagged separately (pattern 29).
+- **The durable signals are structural, not lexical:** sentence-length burstiness, clause-density variation, and **punctuation entropy** (pattern 28). Stylometric research ([arXiv:2511.21744](https://arxiv.org/abs/2511.21744), [arXiv:2510.00890](https://arxiv.org/abs/2510.00890)) finds combined structural features reach F1 ≈ 0.94, well above perplexity alone — and unlike word lists, they don't expire.
+
+> **Honest caveat:** even the best stylometric detectors top out at ~80–95% accuracy and drop when text is edited. Treat this as a guide, not proof.
+
 ## Credits
 
 - AI patterns based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) by WikiProject AI Cleanup

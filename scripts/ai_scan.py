@@ -14,6 +14,7 @@ Usage:
     python ai_scan.py --deep <file>           # enables optional NLP checks (needs spacy)
     python ai_scan.py --text "paste text here"
     python ai_scan.py --stdin < file.txt
+    python ai_scan.py --json <file>           # emit ONLY the JSON report (clean, parseable)
 
 Chapters: intro, litreview, methodology, results, discussion, conclusion
 If no chapter specified, uses general defaults.
@@ -31,7 +32,15 @@ import math
 from pathlib import Path
 from collections import Counter
 
-# ─── Banned vocabulary ───
+# ─── Banned vocabulary (2023–24 lexical markers) ───
+# Source: Kobak et al., "Delving into LLM-assisted writing in biomedical publications
+# through excess vocabulary," Science Advances 2025 (arXiv:2406.07016; 14M PubMed
+# abstracts, 2010–2024). The highest-ratio excess words were delves (~25x), showcasing
+# (~9x) and underscores (~9x).
+# CAVEAT: lexical tells decay as labs train them out. "delve" peaked in 2023–24 and
+# faded through 2025, so a low-frequency hit here is only a WEAK signal in 2026. The
+# durable signals are structural (sentence-length burstiness, punctuation entropy,
+# clause density) — see patterns 21, 23, 28 and arXiv:2511.21744 / arXiv:2510.00890.
 BANNED_WORDS = [
     "delve", "crucial", "pivotal", "paramount", "vital", "cornerstone",
     "groundbreaking", "transformative", "indelible", "enduring",
@@ -72,6 +81,16 @@ ING_ENDINGS = [
     "highlighting the", "underscoring the", "emphasizing the",
     "contributing to the", "reflecting the", "symbolizing the",
     "showcasing the", "fostering the", "ensuring the",
+]
+
+# ─── 2026 transition/opener crutches ───
+# Post-"delve" era: as labs trained out the 2023–24 vocabulary, current-gen models
+# leaned on formulaic transitions/openers instead (completeaitraining 2026 survey;
+# Wikipedia "Signs of AI writing"). These are now the more reliable lexical tell.
+LLM_2026_CRUTCHES = [
+    "in conclusion,", "it is important to note", "it's important to note",
+    "in summary,", "overall,", "ultimately,", "notably,", "importantly,",
+    "as a result,", "to summarize,",
 ]
 
 # ─── Chapter profiles ───
@@ -139,15 +158,21 @@ CHAPTER_PROFILES = {
 
 
 def parse_args(args):
-    """Parse command line arguments. Returns (text, chapter_profile_or_None, deep_mode)."""
+    """Parse command line arguments. Returns (text, chapter_profile_or_None, deep_mode, json_only)."""
     chapter = None
     deep = False
+    json_only = False
     remaining = list(args[1:])
 
     # Extract --deep flag
     if "--deep" in remaining:
         deep = True
         remaining.remove("--deep")
+
+    # Extract --json flag (emit only the JSON report, no human-readable text)
+    if "--json" in remaining:
+        json_only = True
+        remaining.remove("--json")
 
     # Extract --chapter flag
     if "--chapter" in remaining:
@@ -163,21 +188,21 @@ def parse_args(args):
 
     # Read text
     if len(remaining) >= 2 and remaining[0] == "--text":
-        return " ".join(remaining[1:]), chapter, deep
+        return " ".join(remaining[1:]), chapter, deep, json_only
     if len(remaining) >= 1 and remaining[0] == "--stdin":
-        return sys.stdin.read(), chapter, deep
+        return sys.stdin.read(), chapter, deep, json_only
     if len(remaining) >= 1:
         path = Path(remaining[0])
         if path.suffix == ".docx":
             try:
                 from docx import Document
                 doc = Document(str(path))
-                return "\n\n".join(p.text for p in doc.paragraphs if p.text.strip()), chapter, deep
+                return "\n\n".join(p.text for p in doc.paragraphs if p.text.strip()), chapter, deep, json_only
             except ImportError:
                 print("python-docx not installed. Install: pip install python-docx", file=sys.stderr)
                 sys.exit(1)
         else:
-            return path.read_text(encoding="utf-8"), chapter, deep
+            return path.read_text(encoding="utf-8"), chapter, deep, json_only
     print(__doc__)
     sys.exit(0)
 
@@ -476,8 +501,10 @@ def scan(text, chapter=None, deep=False):
         if has_short and has_long:
             positive_signals.append({"pattern": 19, "name": "Paragraph length variety", "detail": "Mix of short and long paragraphs"})
 
-    # 20. Specific numbers
-    numbers_in_text = re.findall(r'\b\d+\.?\d*\b', text)
+    # 20. Specific numbers (exclude 4-digit citation years, which otherwise inflate
+    # the count and make a citation-heavy lit review look falsely number-rich)
+    all_numbers = re.findall(r'\b\d+\.?\d*\b', text)
+    numbers_in_text = [n for n in all_numbers if not re.fullmatch(r'(19|20)\d{2}', n)]
     numbers_per_100 = len(numbers_in_text) / max(1, word_count / 100)
     if numbers_per_100 >= 2:
         positive_signals.append({"pattern": 20, "name": "Specific numbers used", "detail": f"{len(numbers_in_text)} numbers ({numbers_per_100:.1f} per 100 words)"})
@@ -551,6 +578,35 @@ def scan(text, chapter=None, deep=False):
             "severity": "minor",
             "detail": f'{logical_count} logical connectives (therefore/thus/hence) vs {narrative_count} narrative (but/though/yet). AI skews logical.',
             "fix": "Replace some 'therefore' with 'but' or 'though' where the contrast fits"
+        })
+
+    # 28. Punctuation entropy (durable stylometric signal; arXiv:2511.21744, 2510.00890)
+    # Human writing uses a varied punctuation mix; AI leans heavily on periods + commas,
+    # giving low Shannon entropy over punctuation types. Unlike word lists, this does not
+    # decay as models change, so it is a more future-proof check.
+    punct_chars = [c for c in text if c in '.,;:!?()-—"‘’“”']
+    p_entropy = 0.0
+    if punct_chars:
+        pcounts = Counter(punct_chars)
+        tot_p = sum(pcounts.values())
+        p_entropy = -sum((n / tot_p) * math.log2(n / tot_p) for n in pcounts.values())
+    if word_count > 150 and p_entropy < 1.5:
+        violations.append({
+            "pattern": 28, "name": "Low punctuation entropy",
+            "severity": "medium",
+            "detail": f"Punctuation entropy {p_entropy:.2f} bits (target >1.5). Text leans almost entirely on periods and commas — a robotic-rhythm tell.",
+            "fix": "Introduce semicolons, colons, parentheses, or dashes where natural"
+        })
+
+    # 29. 2026 transition/opener crutches (post-'delve' era)
+    crutch_hits = sum(text_lower.count(c) for c in LLM_2026_CRUTCHES)
+    crutch_per_1000 = crutch_hits / max(1, word_count / 1000)
+    if crutch_hits >= 2 and crutch_per_1000 > 4:
+        violations.append({
+            "pattern": 29, "name": "Formulaic transition/opener crutches (2026)",
+            "severity": "medium",
+            "detail": f"{crutch_hits} formulaic openers/transitions ({crutch_per_1000:.1f}/1000 words), e.g. 'In conclusion,', 'It is important to note', 'Notably,'. The current-gen tell now that 2023-24 vocabulary has faded.",
+            "fix": "Cut or vary formulaic openers; start sentences with evidence or specifics"
         })
 
     # ─── CHAPTER-SPECIFIC CHECKS ───
@@ -639,6 +695,7 @@ def scan(text, chapter=None, deep=False):
             "however_per_1000": round(transition_count / max(1, word_count / 1000), 1),
             "em_dashes": em_dash_count,
             "punctuation_types": len(punct_types),
+            "punctuation_entropy": round(p_entropy, 2),
             "numbers_per_100w": round(numbers_per_100, 1),
         }
     }
@@ -646,8 +703,14 @@ def scan(text, chapter=None, deep=False):
 
 def main():
     sys.stdout.reconfigure(encoding='utf-8')
-    text, chapter, deep = parse_args(sys.argv)
+    text, chapter, deep, json_only = parse_args(sys.argv)
     report = scan(text, chapter, deep)
+
+    # Machine-readable mode: emit only clean JSON (no human-readable text before it)
+    if json_only:
+        json.dump(report, sys.stdout, indent=2, ensure_ascii=False)
+        print()
+        return
 
     # Print human-readable summary
     print(f"\n{'='*60}")

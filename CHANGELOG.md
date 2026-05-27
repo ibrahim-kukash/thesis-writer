@@ -1,5 +1,16 @@
 # Changelog
 
+## v6.2.0 (2026-05-27)
+
+Research-grounded 2026 update: re-based the lexical checks on current findings and added durable structural detection.
+
+- **Pattern 28: Low punctuation entropy** — Shannon entropy over punctuation types; flags text that leans almost entirely on periods and commas. A structural tell that does not decay as models change (arXiv:2511.21744, arXiv:2510.00890).
+- **Pattern 29: 2026 transition/opener crutches** — flags formulaic openers ("In conclusion," "It is important to note," "Notably," etc.). These replaced the 2023–24 vocabulary as the current-gen lexical tell after "delve" and similar words faded through 2025.
+- **Time-versioned the banned-word list** — documented (with citation) that lexical tells decay: Kobak et al., *Science Advances* 2025 (arXiv:2406.07016, 14M PubMed abstracts). Low-frequency hits are now treated as weak signals.
+- **Bug fix:** citation years are no longer counted as "specific numbers" — 4-digit years (1900–2099) are excluded, so a citation-heavy literature review no longer looks falsely number-rich.
+- **Added `--json` flag** — emits only the JSON report (no human-readable text first), so output parses reliably.
+- **Added a test suite** (`tests/test_ai_scan.py`) — pytest-compatible, also runnable standalone.
+
 ## v6.0.0 (2026-04-11)
 
 - Added 4 structural patterns (based on MDPI 2025, Kujur 2025, Nature 2025 research):
