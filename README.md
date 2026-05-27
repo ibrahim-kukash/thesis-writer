@@ -16,7 +16,7 @@ Write publication-quality MSc/PhD thesis chapters that pass examiner scrutiny an
 claude skill add /path/to/thesis-writer
 
 # Or clone and point to it
-git clone https://github.com/YOUR_USERNAME/thesis-writer.git ~/.claude/skills/thesis-writer
+git clone https://github.com/futureweapons2022-crypto/thesis-writer.git ~/.claude/skills/thesis-writer
 ```
 
 ## Usage
@@ -65,7 +65,7 @@ thesis-writer/
 ├── README.md
 ├── LICENSE
 ├── references/
-│   ├── ai-patterns.md              # 14 AI patterns with before/after examples
+│   ├── ai-patterns.md              # 14 patterns to avoid + 9 human-writing signals
 │   ├── chapter-rules.md            # Chapter-by-chapter writing rules
 │   └── viva-questions.md           # 35+ examiner questions by difficulty
 └── scripts/
